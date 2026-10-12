@@ -1,0 +1,20 @@
+services:
+  sync-server:
+    build: .
+    ports:
+      - "9637:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-long-random-string}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/sync.db}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      DATA_DIR: /data
+      # On a VPS, set to your public origin, e.g. http://YOUR_IP:9637 or https://sync.example.com
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:9637}
+    volumes:
+      - sync-data:/data
+    restart: unless-stopped
+
+volumes:
+  sync-data:

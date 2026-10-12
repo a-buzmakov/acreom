@@ -28,10 +28,9 @@ export interface WorkerContext {
         sep: '\\' | '/';
         onLine: boolean;
         platform: 'desktop' | 'mobile' | 'web';
-        baseUrl:
-            | 'http://localhost:8080'
-            | 'https://staging-api.acreom.com'
-            | 'https://api.acreom.com';
+        baseUrl: string;
+        acreomDefaultBaseUrl?: string;
+        selfHostedSync?: boolean;
         githubProxyUrl: string;
         os: 'windows' | 'linux' | 'macos' | 'android' | 'ios' | 'web';
         clientId: string;

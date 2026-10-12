@@ -132,23 +132,8 @@
                                 account-settings__wrapper__manage__text__plan
                             "
                         >
-                            {{ getCurrentPlan }}
+                            Personal
                         </div>
-                    </div>
-                    <div class="account-settings__wrapper__manage__action">
-                        <button
-                            v-if="
-                                $accessControl.isProActive &&
-                                !$accessControl.isTrialActive
-                            "
-                            class="manage-sub"
-                            @click="manageSubURL"
-                        >
-                            Manage billing
-                        </button>
-                        <button v-else class="manage-sub" @click="upgradeToPro">
-                            Upgrade to Pro
-                        </button>
                     </div>
                 </div>
                 <div class="account-settings__wrapper__manage">
@@ -205,9 +190,7 @@
 </template>
 
 <script lang="ts">
-import { differenceInCalendarDays, format } from 'date-fns';
 import { Component, Vue } from 'vue-property-decorator';
-import { DateFormat } from '~/helpers/date';
 import LoginButtons from '@/components/auth/login-buttons';
 import CSwitch from '~/components/CSwitch.vue';
 import CButton from '~/components/CButton.vue';
@@ -218,7 +201,6 @@ import { DatabaseServiceAction, ServiceKey } from '~/constants';
 import { TrackEvent } from '~/helpers/decorators';
 import {
     TrackingAction,
-    TrackingActionSource,
     TrackingType,
 } from '~/@types/tracking';
 
@@ -289,35 +271,6 @@ export default class AccountSettings extends Vue {
         }
 
         return null;
-    }
-
-    get getCurrentPlan() {
-        if (
-            !this.$accessControl.isTrialActive &&
-            !this.$accessControl.isProActive
-        ) {
-            return 'Personal';
-        }
-
-        if (this.$accessControl.isTrialActive) {
-            try {
-                const to = new Date(
-                    this.$store.getters['user/subscription']?.to,
-                );
-                const daysLeft = differenceInCalendarDays(to, new Date());
-                return `PRO (trial) ${daysLeft} days left`;
-            } catch (error) {
-                this.$sentry.captureException(error);
-                console.log(error);
-            }
-            return `PRO (trial)`;
-        }
-
-        if (this.$accessControl.isProActive) {
-            return `PRO next billing on ${this.subExpire}`;
-        }
-
-        return 'Free';
     }
 
     get letter() {
@@ -402,36 +355,6 @@ export default class AccountSettings extends Vue {
 
     get subStatus() {
         return this.$store.getters['user/subscription']?.status;
-    }
-
-    dateFormat() {
-        const dFormat =
-            this.$store.getters['appSettings/dateTimeOptions'].dateFormat;
-
-        return dFormat === DateFormat.EU ? 'd/M/yyyy' : 'M/d/yyyy';
-    }
-
-    get subExpire() {
-        const subscription = this.$store.getters['user/subscription'];
-        if (subscription) {
-            return format(
-                new Date(this.$store.getters['user/subscription']?.to),
-                this.dateFormat(),
-            );
-        }
-        return 'Connection offline';
-    }
-
-    manageSubURL() {
-        this.$utils.navigation.openExternalLink(
-            this.$cloudService.User.manage(),
-        );
-    }
-
-    upgradeToPro() {
-        this.$vfm.show({
-            component: () => import('~/components/modal/UpgradeModal.vue'),
-        });
     }
 
     retryCheckStatus() {

@@ -747,12 +747,6 @@ export default class DefaultLayout extends Vue {
             document.addEventListener('mouseup', onMouseUpHandler);
         });
 
-        if (this.showTrialMessage) {
-            this.$vfm.show({
-                component: () =>
-                    import('~/components/modal/TrialStartedModal.vue'),
-            });
-        }
     }
 
     handleMyDayRollover() {
@@ -778,11 +772,6 @@ export default class DefaultLayout extends Vue {
                 });
             }
         });
-    }
-
-    get showTrialMessage() {
-        return this.$store.getters['subscription/trialOptions']
-            .showTrialMessage;
     }
 
     registerShareShortcut() {

@@ -437,6 +437,7 @@ const config: NuxtConfig = {
         githubProxyUrl: GITHUB_PROXY_URL,
         feBaseUrl: URL,
         env: ENV,
+        hasPro: true,
         axios: {
             browserBaseURL: BASE_URL,
             baseUrl: BASE_URL,

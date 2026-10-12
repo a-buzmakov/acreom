@@ -11,8 +11,15 @@ const client = new Octokit({
   auth: token
 });
 
-const OWNER = 'acreom';
-const REPO = 'app';
+const OWNER =
+  process.env.RELEASE_OWNER ||
+  process.env.GITHUB_REPOSITORY_OWNER ||
+  'acreom';
+const REPO =
+  process.env.RELEASE_REPO ||
+  (process.env.GITHUB_REPOSITORY
+    ? process.env.GITHUB_REPOSITORY.split('/')[1]
+    : 'app');
 const URL = `/repos/${OWNER}/${REPO}/releases`;
 const VERSION = pkg.version;
 const FILE_NAME = 'latest-mac.yml';

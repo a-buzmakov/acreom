@@ -99,19 +99,6 @@
             </div>
             <div class="workspace-selector-dropdown__option__text">Import</div>
         </button>
-        <button
-            v-if="!$accessControl.hasProAccess"
-            class="workspace-selector-dropdown__option"
-            @click="upgrade"
-        >
-            <div class="workspace-selector-dropdown__option__icon">
-                <ShoppingBusinessStartup size="16" class="icon" />
-            </div>
-            <div class="workspace-selector-dropdown__option__text pro">
-                Upgrade to
-                <p class="pro-badge">PRO</p>
-            </div>
-        </button>
     </div>
 </template>
 
@@ -129,7 +116,6 @@ import { isElectron } from '~/helpers/is-electron';
 import LoadingIcon from '~/components/icons/LoadingIcon.vue';
 import DesktopSyncStatus from '~/components/sidebar/DesktopSyncStatus.vue';
 import InterfaceUploadSquareAlternate from '~/components/streamline/InterfaceUploadSquareAlternate.vue';
-import ShoppingBusinessStartup from '~/components/streamline/ShoppingBusinessStartup.vue';
 import InterfaceSettingCog from '~/components/streamline/InterfaceSettingCog.vue';
 import { DatabaseServiceAction, ServiceKey } from '~/constants';
 import InterfaceLock from '~/components/streamline/InterfaceLock.vue';
@@ -144,7 +130,6 @@ import {
     components: {
         InterfaceLock,
         InterfaceSettingCog,
-        ShoppingBusinessStartup,
         InterfaceUploadSquareAlternate,
         DesktopSyncStatus,
         LoadingIcon,
@@ -265,26 +250,10 @@ export default class WorkspaceSelector extends Vue {
     get loggedIn() {
         return this.$store.getters['auth/loggedIn'];
     }
-
-    upgrade() {
-        this.$emit('close');
-        this.$vfm.show({
-            component: () => import('~/components/modal/UpgradeModal.vue'),
-        });
-    }
 }
 </script>
 
 <style lang="scss" scoped>
-.pro-badge {
-    @include proBadge;
-}
-
-.pro {
-    display: flex;
-    gap: 4px;
-}
-
 .loading-icon {
     margin-left: 8px;
 }

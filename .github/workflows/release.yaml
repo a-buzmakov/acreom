@@ -1,7 +1,33 @@
 name: Production Release
 
+# Builds Windows + macOS desktop apps and publishes draft GitHub Releases
+# to this repository. Configure secrets/vars listed in the job comments
+# (and the checklist returned with this change) before enabling signing.
+
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  # Sync API baked into the frontend at build time. Override via repo Variable.
+  # Runtime settings UI can still point at a different sync-server.
+  BASE_URL: ${{ vars.BASE_URL || 'http://localhost:8000' }}
+  FE_BASE_URL: ${{ vars.FE_BASE_URL || 'http://localhost:3000' }}
+  # Optional analytics / error reporting (leave unset for self-hosted)
+  SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  SENTRY_DSN_URL: ${{ vars.SENTRY_DSN_URL }}
+  TRACKING_URL_V2: ${{ vars.TRACKING_URL_V2 }}
+  # Billing URLs unused when hasPro is unlocked in nuxt.config
+  MONTHLY_BILLING_URL: ${{ vars.MONTHLY_BILLING_URL }}
+  YEARLY_BILLING_URL: ${{ vars.YEARLY_BILLING_URL }}
+  # Publish draft releases to this fork by default
+  RELEASE_OWNER: ${{ vars.RELEASE_OWNER || github.repository_owner }}
+  RELEASE_REPO: ${{ vars.RELEASE_REPO || github.event.repository.name }}
+  # Prefer a PAT if publishing to a different repo; otherwise GITHUB_TOKEN
+  GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN || github.token }}
+  ADBLOCK: 'true'
 
 jobs:
   build-quick-capture:
@@ -24,7 +50,6 @@ jobs:
           key: qc-node-modules-${{ hashFiles('./quick-capture/yarn.lock') }}
 
       - name: Install Dependencies
-        if: steps.cache-dist.outputs.cache-hit != 'true'
         run: yarn install
         working-directory: quick-capture
 
@@ -33,21 +58,17 @@ jobs:
         working-directory: quick-capture
 
       - name: Save Artifacts
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: qc-${{ github.sha }}
           path: quick-capture/dist
 
   build-frontend-windows:
     name: Build Frontend Windows
-    runs-on: ubicloud-standard-8
+    runs-on: ubuntu-latest
     env:
-      MONTHLY_BILLING_URL: 'https://buy.stripe.com/dR65km21hekVf7ibIN'
-      YEARLY_BILLING_URL: 'https://buy.stripe.com/fZebIK6hxb8JbV6007'
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_DSN_URL: 'https://2ce2e478274846a0af4c3bee391c502b@o1191562.ingest.sentry.io/6313004'
-      TRACKING_URL_V2: 'https://europe-west1-dev-acreom.cloudfunctions.net/t2'
       ACR_OS: windows
+      ACR_PLATFORM: desktop
 
     steps:
       - name: Check out Git repository
@@ -77,65 +98,17 @@ jobs:
         working-directory: frontend
 
       - name: Save Artifacts
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: windows-latest-${{ github.sha }}
           path: frontend/dist
 
-  build-frontend-linux:
-    name: Build Frontend Linux
-    runs-on: ubicloud-standard-8
-    env:
-      MONTHLY_BILLING_URL: 'https://buy.stripe.com/dR65km21hekVf7ibIN'
-      YEARLY_BILLING_URL: 'https://buy.stripe.com/fZebIK6hxb8JbV6007'
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_DSN_URL: 'https://2ce2e478274846a0af4c3bee391c502b@o1191562.ingest.sentry.io/6313004'
-      TRACKING_URL_V2: 'https://europe-west1-dev-acreom.cloudfunctions.net/t2'
-      ACR_OS: linux
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - uses: actions/cache@v4
-        with:
-          path: './frontend/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('./frontend/yarn.lock') }}
-
-      - name: Install Dependencies
-        run: yarn install
-        working-directory: frontend
-
-      - name: Upgrade virtual scroll
-        run: yarn upgrade vue-virtual-collection
-        working-directory: frontend
-
-      - name: Generate Frontend
-        run: yarn build
-        working-directory: frontend
-
-      - name: Save Artifacts
-        uses: actions/upload-artifact@master
-        with:
-          name: linux-latest-${{ github.sha }}
-          path: frontend/dist
-
   build-frontend-mac:
     name: Build Frontend MacOS
-    runs-on: ubicloud-standard-8
+    runs-on: ubuntu-latest
     env:
-      MONTHLY_BILLING_URL: 'https://buy.stripe.com/dR65km21hekVf7ibIN'
-      YEARLY_BILLING_URL: 'https://buy.stripe.com/fZebIK6hxb8JbV6007'
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      SENTRY_DSN_URL: 'https://2ce2e478274846a0af4c3bee391c502b@o1191562.ingest.sentry.io/6313004'
-      TRACKING_URL_V2: 'https://europe-west1-dev-acreom.cloudfunctions.net/t2'
       ACR_OS: mac
+      ACR_PLATFORM: desktop
 
     steps:
       - name: Check out Git repository
@@ -165,28 +138,27 @@ jobs:
         working-directory: frontend
 
       - name: Save Artifacts
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v4
         with:
           name: mac-latest-${{ github.sha }}
           path: frontend/dist
 
-  release-macos-m1:
-    name: Release MacOS M1
+  release-macos-arm:
+    name: Release MacOS Apple Silicon
     needs:
       - build-quick-capture
       - build-frontend-mac
     runs-on: macos-latest
     env:
-      GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
-      API_KEY_ID: ${{ secrets.NOTARIZATION_API_KEY_ID }}
-      API_KEY_ISSUER_ID: ${{ secrets.NOTARIZATION_API_KEY_ISSUER_ID }}
-
-      APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
-      APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
-      TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
+      # Signing / notarization (optional — unsigned build if unset)
       CSC_LINK: ${{ secrets.MAC_CERTIFICATES }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATES_PASSWORD }}
-      ADBLOCK: true
+      CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATES && 'true' || 'false' }}
+      APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
+      TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
+      API_KEY_ID: ${{ secrets.NOTARIZATION_API_KEY_ID }}
+      API_KEY_ISSUER_ID: ${{ secrets.NOTARIZATION_API_KEY_ISSUER_ID }}
 
     steps:
       - name: Check out Git repository
@@ -194,8 +166,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
       - name: Prepare for app notarization (macOS)
-        # Import Apple API key for app notarization on macOS
+        if: ${{ secrets.NOTARIZATION_API_KEY != '' && secrets.NOTARIZATION_API_KEY_ID != '' }}
         run: |
           mkdir -p ~/private_keys/
           echo '${{ secrets.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.NOTARIZATION_API_KEY_ID }}.p8
@@ -203,16 +179,16 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: './electron/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('./electron/yarn.lock') }}
+          key: ${{ runner.os }}-arm-modules-${{ hashFiles('./electron/yarn.lock') }}
 
       - name: Download Quick Capture Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: qc-${{ github.sha }}
           path: quick-capture/dist
 
       - name: Download Frontend Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: mac-latest-${{ github.sha }}
           path: frontend/dist
@@ -230,8 +206,6 @@ jobs:
           cd ./scripts
           yarn
           yarn merge
-        env:
-          GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
 
   release-macos-intel:
     name: Release MacOS Intel
@@ -240,16 +214,14 @@ jobs:
       - build-frontend-mac
     runs-on: macos-13
     env:
-      GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
-      API_KEY_ID: ${{ secrets.NOTARIZATION_API_KEY_ID }}
-      API_KEY_ISSUER_ID: ${{ secrets.NOTARIZATION_API_KEY_ISSUER_ID }}
-
-      APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
-      APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
-      TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
       CSC_LINK: ${{ secrets.MAC_CERTIFICATES }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATES_PASSWORD }}
-      ADBLOCK: true
+      CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATES && 'true' || 'false' }}
+      APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
+      APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
+      TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
+      API_KEY_ID: ${{ secrets.NOTARIZATION_API_KEY_ID }}
+      API_KEY_ISSUER_ID: ${{ secrets.NOTARIZATION_API_KEY_ISSUER_ID }}
 
     steps:
       - name: Check out Git repository
@@ -262,7 +234,7 @@ jobs:
           node-version: 18
 
       - name: Prepare for app notarization (macOS)
-        # Import Apple API key for app notarization on macOS
+        if: ${{ secrets.NOTARIZATION_API_KEY != '' && secrets.NOTARIZATION_API_KEY_ID != '' }}
         run: |
           mkdir -p ~/private_keys/
           echo '${{ secrets.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.NOTARIZATION_API_KEY_ID }}.p8
@@ -270,16 +242,16 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: './electron/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('./electron/yarn.lock') }}
+          key: ${{ runner.os }}-intel-modules-${{ hashFiles('./electron/yarn.lock') }}
 
       - name: Download Quick Capture Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: qc-${{ github.sha }}
           path: quick-capture/dist
 
       - name: Download Frontend Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: mac-latest-${{ github.sha }}
           path: frontend/dist
@@ -297,18 +269,18 @@ jobs:
           cd ./scripts
           yarn
           yarn merge
-        env:
-          GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
 
   release-windows:
     name: Release Windows
     needs:
       - build-quick-capture
       - build-frontend-windows
-    runs-on: windows-adam
+    runs-on: windows-latest
     env:
-      GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
-      ADBLOCK: true
+      # Optional Windows code signing (base64 PFX or file URL)
+      WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
     steps:
       - name: Check out Git repository
@@ -326,60 +298,15 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('./electron/yarn.lock') }}
 
       - name: Download Quick Capture Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: qc-${{ github.sha }}
           path: quick-capture/dist
 
       - name: Download Frontend Artifacts
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v4
         with:
           name: windows-latest-${{ github.sha }}
-          path: frontend/dist
-
-      - name: Install Dependencies
-        run: yarn install
-        working-directory: electron
-
-      - name: Release
-        run: yarn release
-        working-directory: electron
-
-  release-linux:
-    name: Release Linux
-    needs:
-      - build-quick-capture
-      - build-frontend-linux
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.ACREOM_RELEASE_REPO_TOKEN }}
-      ADBLOCK: true
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - uses: actions/cache@v4
-        with:
-          path: './electron/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('./electron/yarn.lock') }}
-
-      - name: Download Quick Capture Artifacts
-        uses: actions/download-artifact@master
-        with:
-          name: qc-${{ github.sha }}
-          path: quick-capture/dist
-
-      - name: Download Frontend Artifacts
-        uses: actions/download-artifact@master
-        with:
-          name: linux-latest-${{ github.sha }}
           path: frontend/dist
 
       - name: Install Dependencies

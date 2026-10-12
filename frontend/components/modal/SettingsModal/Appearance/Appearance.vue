@@ -286,9 +286,6 @@ export default class Preferences extends Vue {
 
     updateAccentColorIndex(value: string) {
         if (!this.canChangeAccentColor) {
-            this.$vfm.show({
-                component: () => import('~/components/modal/UpgradeModal.vue'),
-            });
             return;
         }
 

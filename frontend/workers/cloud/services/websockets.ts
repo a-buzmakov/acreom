@@ -43,6 +43,25 @@ export class WebsocketsService {
         }
     }
 
+    resetForBaseUrlChange() {
+        this.disconnectSockets();
+        if (this.manager) {
+            try {
+                this.manager.removeAllListeners();
+                // @ts-ignore socket.io Manager close
+                this.manager.close?.();
+            } catch (e) {}
+            this.manager = undefined as any;
+        }
+        this.isReady = false;
+        this.isReadyPromise = new Promise<void>(resolve => {
+            this.isReadyPromiseCallback = () => {
+                this.isReady = true;
+                resolve();
+            };
+        });
+    }
+
     async reconnectSockets() {
         if (this.reconnecting) return;
         this.reconnecting = true;

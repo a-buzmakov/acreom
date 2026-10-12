@@ -54,7 +54,7 @@ export class AccessControl {
     }
 
     readOnlyDeny() {
-        this.showProModal();
+        // Self-hosted: Pro is always unlocked; do not open paywall.
     }
 
     get subscribeLink() {
@@ -69,8 +69,6 @@ export class AccessControl {
     }
 
     showProModal() {
-        this.context.$vfm.show({
-            component: () => import('~/components/modal/UpgradeModal.vue'),
-        });
+        // Self-hosted: Pro is always unlocked; do not open paywall.
     }
 }

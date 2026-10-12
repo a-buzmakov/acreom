@@ -29,18 +29,7 @@
                 </button>
             </div>
             <div class="sharing-modal__body" :class="{ enabled: share }">
-                <button
-                    v-if="!$accessControl.isProActive"
-                    class="sharing-modal--access-info"
-                    @click="openUpgradeModal(close)"
-                >
-                    Available in PRO plan
-                </button>
-                <label
-                    for="share"
-                    class="sharing-modal__body__label"
-                    :class="{ disabled: !$accessControl.isProActive }"
-                >
+                <label for="share" class="sharing-modal__body__label">
                     <div class="sharing-modal__body__icon">
                         <GlobeIcon size="20" />
                     </div>
@@ -48,7 +37,6 @@
                     <CSwitch
                         id="share"
                         :value="share"
-                        :disabled="!$accessControl.isProActive"
                         @input="handleSharingToggle"
                     />
                 </label>
@@ -106,13 +94,6 @@ export default class ShareModal extends Vue {
         );
 
         return this.share ? `${origin}/d/${this.documentData.sharingUuid}` : '';
-    }
-
-    openUpgradeModal(close: any) {
-        close();
-        this.$vfm.show({
-            component: () => import('~/components/modal/UpgradeModal.vue'),
-        });
     }
 
     handleSharingToggle(value: boolean) {
@@ -231,20 +212,6 @@ export default class ShareModal extends Vue {
             color: var(--share-modal-icon-text-color);
             padding: 6px;
             border-radius: 6px;
-        }
-    }
-
-    &--access-info {
-        @include font12-400;
-        width: 100%;
-        background: var(--share-modal-access-bg-color);
-        border-radius: 8px;
-        padding: 14px 17px 12px;
-        margin-bottom: 12px;
-        color: var(--share-modal-access-text-color);
-
-        &:hover {
-            background: var(--share-modal-access-bg-color__hover);
         }
     }
 }

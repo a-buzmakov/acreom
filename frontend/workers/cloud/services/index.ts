@@ -15,4 +15,5 @@ export { LoaderService } from './loader';
 export { JiraIntegrationService } from './jira-integration';
 export { GithubIntegrationService } from './github-integration';
 export { RecoveryKeysService } from './recoveryKeys';
+export { AppSettingsService } from './appSettings';
 export { ViewsService } from './views';

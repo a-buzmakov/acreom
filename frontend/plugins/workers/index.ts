@@ -31,6 +31,11 @@ import { UtilsWrapper } from '~/plugins/workers/utils';
 import { CloudServiceWrapper } from '~/plugins/workers/cloud';
 import { AssistantWrapper } from '~/plugins/workers/assistant';
 import { EncryptionWrapper } from '~/plugins/workers/encryption';
+import {
+    SYNC_CONFIG_STORAGE_KEY,
+    SyncConfig,
+    applyRuntimeBaseUrl,
+} from '~/helpers/sync-config';
 
 declare module '@nuxt/types' {
     interface Context {
@@ -68,6 +73,28 @@ const servicesPlugin: Plugin = async (ctx: Context, inject: Inject) => {
     }
 
     ctx.store.commit('auth/clientId', clientId);
+
+    const syncConfig = ctx.$appStorage.get(SYNC_CONFIG_STORAGE_KEY) as
+        | SyncConfig
+        | null;
+    if (syncConfig?.baseUrl) {
+        applyRuntimeBaseUrl(ctx, syncConfig.baseUrl, true);
+        ctx.store.commit('syncConfig/set', {
+            baseUrl: syncConfig.baseUrl,
+            email: syncConfig.email || '',
+            accessToken: syncConfig.accessToken || null,
+            refreshToken: syncConfig.refreshToken || null,
+            expiresAt: syncConfig.expiresAt ?? null,
+            connected: Boolean(
+                syncConfig.accessToken && syncConfig.refreshToken,
+            ),
+        });
+    } else {
+        const config = ctx.$config as any;
+        if (!config.acreomDefaultBaseUrl) {
+            config.acreomDefaultBaseUrl = config.baseUrl;
+        }
+    }
 
     const integrationsWorkerInstance = new IntegrationsWorker();
     const databaseWorkerInstance = new DatabaseWorker();

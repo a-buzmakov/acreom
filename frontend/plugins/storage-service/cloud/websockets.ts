@@ -24,6 +24,30 @@ export class WebsocketsService {
         });
     }
 
+    resetForBaseUrlChange() {
+        for (const namespace of Object.keys(this.sockets)) {
+            try {
+                this.sockets[namespace]?.disconnect();
+            } catch (e) {}
+            delete this.sockets[namespace];
+        }
+        if (this.manager) {
+            try {
+                this.manager.removeAllListeners();
+                // @ts-ignore
+                this.manager.close?.();
+            } catch (e) {}
+            this.manager = undefined as any;
+        }
+        this.isReady = false;
+        this.isReadyPromise = new Promise<void>(resolve => {
+            this.isReadyPromiseCallback = () => {
+                this.isReady = true;
+                resolve();
+            };
+        });
+    }
+
     async initialize() {
         if (!this.manager) {
             this.manager = new Manager(

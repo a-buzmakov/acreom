@@ -158,12 +158,6 @@ export default class Validate extends Vue {
 
             if (!loggedIn) return;
 
-            if (strategy === 'login-pay' && !this.$accessControl.hasProAccess) {
-                this.$utils.navigation.openExternalLink(
-                    this.$accessControl.subscribeLink,
-                );
-            }
-
             if (isElectron() && this.$config.os === 'linux') {
                 (window as SafeElectronWindow).electron.closeExternalLogin();
             }

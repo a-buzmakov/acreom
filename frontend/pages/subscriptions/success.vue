@@ -4,18 +4,13 @@
             <div class="success-page--container--container-content">
                 <div id="pro-loader" ref="loader"></div>
                 <h1 class="success-page--container--container-content--heading">
-                    Congratulations!
+                    You're all set
                 </h1>
                 <h2
                     class="success-page--container--container-content--heading2"
                 >
-                    You now have access to all PRO features.
-                </h2>
-                <h2
-                    class="success-page--container--container-content--heading2"
-                >
-                    The subscription was activated
-                    {{ user ? ` for ${user.email}` : '' }}
+                    Open acreom to continue
+                    {{ user ? ` as ${user.email}` : '' }}.
                 </h2>
                 <div
                     class="

@@ -55,10 +55,39 @@ export class AuthService {
         }?state=${encodeURIComponent(redirectUrl)}`;
     }
 
+    async selfHostedLogin(
+        email: string,
+        plainPassword: string,
+    ): Promise<CloudResponse<any>> {
+        return this.axiosInstance
+            .post(`${this.axiosInstance.defaults.baseURL}/api/auth/login`, {
+                email,
+                password: plainPassword,
+            })
+            .then(data => {
+                return {
+                    status: data.status,
+                    statusText: data.statusText,
+                    data: data.data,
+                };
+            })
+            .catch((err: AxiosError) => {
+                return {
+                    status: err.response?.status,
+                    statusText: err.response?.statusText,
+                    data: err.response?.data,
+                } as CloudResponse<any>;
+            });
+    }
+
     async login(
         email: string,
         plainPassword: string,
     ): Promise<CloudResponse<any>> {
+        if ((this.$config as any).selfHostedSync) {
+            return this.selfHostedLogin(email, plainPassword);
+        }
+
         const response = await this.axiosInstance
             .get(
                 `${this.axiosInstance.defaults.baseURL}/api/auth/password/salt`,

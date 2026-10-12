@@ -89,6 +89,7 @@ export enum CloudServiceAction {
     INITIALIZE = 'cloud intialize',
 
     CLEAR_CACHE = 'cloud clear cache',
+    SET_BASE_URL = 'cloud set base url',
     INITIAL_LOAD = 'cloud initial load',
     INITIAL_LOAD_DELETE_CHANGES = 'cloud initial load delete changes',
     RETRIEVE = 'cloud retrieve',
@@ -170,6 +171,7 @@ export enum DatabaseServiceAction {
     INITIALIZE = 'database initialize',
     INITIALIZE_SYNC = 'database initialize sync',
     INITIALIZE_VAULTS_SYNC = 'database initialize vaults sync',
+    SET_BASE_URL = 'database set base url',
     CONNECT_SYNC = 'database connect sync',
     DISCONNECT_SYNC = 'database disconnect sync',
     LOGOUT = 'database logout',

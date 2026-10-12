@@ -606,6 +606,12 @@ export class OnDeviceService {
         ]);
     }
 
+    setBaseUrl(baseUrl: string, selfHostedSync = true) {
+        if (!this.context?.$config) return;
+        this.context.$config.baseUrl = baseUrl;
+        this.context.$config.selfHostedSync = selfHostedSync;
+    }
+
     connectVaultSync(vaultId: string) {
         return acreomVaultIndexedDB(vaultId).connectSync();
     }

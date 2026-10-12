@@ -17,6 +17,7 @@ import {
     NLPService,
     ProjectsService,
     RecoveryKeysService,
+    AppSettingsService,
     TaskListsService,
     TasksService,
     UserService,
@@ -37,6 +38,7 @@ export class CloudService {
     public sharedAxiosInstance: any;
 
     private context: WorkerContext;
+    private readonly axiosInstances: AxiosInstance[] = [];
     private readonly userService: UserService;
     private readonly documentsService: DocumentsService;
     private readonly projectsService: ProjectsService;
@@ -57,6 +59,7 @@ export class CloudService {
     private readonly githubIntegration: GithubIntegrationService;
     private readonly viewsService: ViewsService;
     private readonly recoveryKeysService: RecoveryKeysService;
+    private readonly appSettingsService: AppSettingsService;
     private refreshPromise: Promise<any> | null = null;
 
     constructor(ctx: WorkerContext) {
@@ -64,7 +67,16 @@ export class CloudService {
             ...ctx,
             $cloudService: this,
         };
-        this.sharedAxiosInstance = createAxiosInstance(scopedContext);
+        const createTrackedAxios = (
+            context: WorkerContext = scopedContext,
+            handleRefreshLogic = true,
+        ) => {
+            const instance = createAxiosInstance(context, handleRefreshLogic);
+            this.axiosInstances.push(instance);
+            return instance;
+        };
+
+        this.sharedAxiosInstance = createTrackedAxios();
         this.userService = new UserService(
             this.sharedAxiosInstance,
             scopedContext,
@@ -98,18 +110,18 @@ export class CloudService {
             scopedContext,
         );
         this.authService = new AuthService(
-            createAxiosInstance(scopedContext),
+            createTrackedAxios(),
             scopedContext,
         );
         this.imagesService = new ImagesService(
-            createAxiosInstance({
+            createTrackedAxios({
                 ...scopedContext,
                 $config: { ...scopedContext.$config, axiosTimeout: 60_000 },
             }),
             scopedContext,
         );
         this.nlpService = new NLPService(
-            createAxiosInstance(scopedContext),
+            createTrackedAxios(),
             scopedContext,
         );
         this.integrationsService = new IntegrationsService(
@@ -124,8 +136,12 @@ export class CloudService {
             this.sharedAxiosInstance,
             scopedContext,
         );
+        this.appSettingsService = new AppSettingsService(
+            this.sharedAxiosInstance,
+            scopedContext,
+        );
         this.googleCalendarIntegration = new GoogleCalendarIntegrationService(
-            createAxiosInstance({
+            createTrackedAxios({
                 ...scopedContext,
                 $config: { ...scopedContext.$config, axiosTimeout: 15_000 },
             }),
@@ -133,7 +149,7 @@ export class CloudService {
         );
         this.jiraIntegration = new JiraIntegrationService(
             this.registerRetry(
-                createAxiosInstance(
+                createTrackedAxios(
                     {
                         ...scopedContext,
                         $config: {
@@ -147,7 +163,7 @@ export class CloudService {
             scopedContext,
         );
         this.linearIntegration = new LinearIntegrationService(
-            createAxiosInstance({
+            createTrackedAxios({
                 ...scopedContext,
                 $config: { ...scopedContext.$config, axiosTimeout: 15_000 },
             }),
@@ -158,7 +174,7 @@ export class CloudService {
             scopedContext,
         );
         this.loaderService = new LoaderService(
-            createAxiosInstance({
+            createTrackedAxios({
                 ...scopedContext,
                 $config: { ...scopedContext.$config, axiosTimeout: 15_000 },
             }),
@@ -171,6 +187,15 @@ export class CloudService {
 
     clearCachedCredentials() {
         clearCachedCredentials();
+    }
+
+    setBaseUrl(baseUrl: string, selfHostedSync = true) {
+        this.context.$config.baseUrl = baseUrl;
+        this.context.$config.selfHostedSync = selfHostedSync;
+        for (const instance of this.axiosInstances) {
+            instance.defaults.baseURL = baseUrl;
+        }
+        this.websocketsService.resetForBaseUrlChange();
     }
 
     async refreshCredentials(
@@ -308,6 +333,10 @@ export class CloudService {
 
     get RecoveryKeys(): RecoveryKeysService {
         return this.recoveryKeysService;
+    }
+
+    get AppSettings(): AppSettingsService {
+        return this.appSettingsService;
     }
 
     registerRetry(instance: AxiosInstance) {

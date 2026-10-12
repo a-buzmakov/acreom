@@ -6,6 +6,7 @@
         <AssistantSettings v-if="activeTab === 'assistant'" />
         <AccountSettings v-if="activeTab === 'myAccount'" />
         <VaultOverviewSettings v-if="activeTab === 'overview'" />
+        <VaultSyncSettings v-if="activeTab === 'sync'" />
         <VaultCalendarSettings v-if="activeTab === 'calendars'" />
         <VaultNotificationsSettings v-if="activeTab === 'notifications'" />
         <TemplatesSettings v-if="activeTab === 'templates'" />
@@ -23,6 +24,7 @@ import Preferences from '~/components/modal/SettingsModal/Preferences/Preference
 import Keybinds from '~/components/modal/SettingsModal/Keybinds/Keybinds.vue';
 import AccountSettings from '~/components/modal/SettingsModal/Account/AccountSettings.vue';
 import VaultOverviewSettings from '~/components/modal/SettingsModal/VaultSettings/VaultOverviewSettings.vue';
+import VaultSyncSettings from '~/components/modal/SettingsModal/VaultSettings/VaultSyncSettings.vue';
 import VaultCalendarSettings from '~/components/modal/SettingsModal/VaultSettings/VaultCalendarSettings.vue';
 import VaultNotificationsSettings from '~/components/modal/SettingsModal/VaultSettings/VaultNotificationsSettings.vue';
 import TemplatesSettings from '~/components/modal/SettingsModal/Templates/TemplatesSettings.vue';
@@ -45,6 +47,7 @@ import LinearIntegrationSettings from '~/components/modal/SettingsModal/LinearIn
         VaultNotificationsSettings,
         VaultCalendarSettings,
         VaultOverviewSettings,
+        VaultSyncSettings,
         AccountSettings,
         Preferences,
         Keybinds,

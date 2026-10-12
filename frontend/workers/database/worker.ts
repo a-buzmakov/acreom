@@ -86,6 +86,10 @@ export class DatabaseWorker extends WorkerBase {
                 return this.deviceService.RecoveryKeys;
             case 'versions':
                 return this.deviceService.Versions;
+            case 'appSettings':
+                return this.deviceService.AppSettings;
+            case 'tasks':
+                return this.deviceService.Tasks;
             default:
                 console.warn(
                     `[DatabaseWorker] resolveService ${table} not found`,
@@ -163,6 +167,12 @@ export class DatabaseWorker extends WorkerBase {
                 return response;
             case DatabaseServiceAction.INITIALIZE:
                 await this.deviceService.initialize(payload as WorkerContext);
+                return response;
+            case DatabaseServiceAction.SET_BASE_URL:
+                this.deviceService.setBaseUrl(
+                    payload.baseUrl,
+                    payload.selfHostedSync ?? true,
+                );
                 return response;
             case DatabaseServiceAction.INITIALIZE_USER:
                 response = await this.deviceService.initializeUser(payload);

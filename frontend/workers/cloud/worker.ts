@@ -81,6 +81,8 @@ export class CloudWorker extends WorkerBase {
                 break;
             case 'recovery-keys':
                 return this.cloudService.RecoveryKeys;
+            case 'app-settings':
+                return this.cloudService.AppSettings;
         }
         return null;
     }
@@ -89,6 +91,12 @@ export class CloudWorker extends WorkerBase {
         switch (operation) {
             case CloudServiceAction.INITIALIZE:
                 this.initialize(payload.context);
+                return {};
+            case CloudServiceAction.SET_BASE_URL:
+                this.cloudService?.setBaseUrl(
+                    payload.baseUrl,
+                    payload.selfHostedSync ?? true,
+                );
                 return {};
             case CloudServiceAction.REFRESH_CREDENTIALS:
                 return this.cloudService.refreshCredentials(

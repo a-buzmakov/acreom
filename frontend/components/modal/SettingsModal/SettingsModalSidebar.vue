@@ -47,6 +47,14 @@
             </button>
             <button
                 class="settings-modal-sidebar__section__item"
+                :class="{ active: activeTab === 'sync' }"
+                data-e2e="settings-Sync"
+                @click="$emit('tab:change', 'sync')"
+            >
+                Sync
+            </button>
+            <button
+                class="settings-modal-sidebar__section__item"
                 :class="{ active: activeTab === 'calendars' }"
                 data-e2e="settings-Calendars"
                 @click="$emit('tab:change', 'calendars')"
