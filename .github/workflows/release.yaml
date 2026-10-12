@@ -154,6 +154,7 @@ jobs:
       CSC_LINK: ${{ secrets.MAC_CERTIFICATES }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATES_PASSWORD }}
       CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATES && 'true' || 'false' }}
+      NOTARIZATION_API_KEY: ${{ secrets.NOTARIZATION_API_KEY }}
       APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
       APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
       TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
@@ -171,10 +172,10 @@ jobs:
           node-version: 18
 
       - name: Prepare for app notarization (macOS)
-        if: ${{ secrets.NOTARIZATION_API_KEY != '' && secrets.NOTARIZATION_API_KEY_ID != '' }}
+        if: ${{ env.NOTARIZATION_API_KEY != '' && env.API_KEY_ID != '' }}
         run: |
           mkdir -p ~/private_keys/
-          echo '${{ secrets.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.NOTARIZATION_API_KEY_ID }}.p8
+          echo '${{ env.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ env.API_KEY_ID }}.p8
 
       - uses: actions/cache@v4
         with:
@@ -217,6 +218,7 @@ jobs:
       CSC_LINK: ${{ secrets.MAC_CERTIFICATES }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATES_PASSWORD }}
       CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATES && 'true' || 'false' }}
+      NOTARIZATION_API_KEY: ${{ secrets.NOTARIZATION_API_KEY }}
       APPLE_ID: ${{ secrets.MAC_APPLE_ID }}
       APPLE_ID_PASSWORD: ${{ secrets.MAC_APPLE_ID_PASSWORD }}
       TEAM_ID: ${{ secrets.MAC_TEAM_ID }}
@@ -234,10 +236,10 @@ jobs:
           node-version: 18
 
       - name: Prepare for app notarization (macOS)
-        if: ${{ secrets.NOTARIZATION_API_KEY != '' && secrets.NOTARIZATION_API_KEY_ID != '' }}
+        if: ${{ env.NOTARIZATION_API_KEY != '' && env.API_KEY_ID != '' }}
         run: |
           mkdir -p ~/private_keys/
-          echo '${{ secrets.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ secrets.NOTARIZATION_API_KEY_ID }}.p8
+          echo '${{ env.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ env.API_KEY_ID }}.p8
 
       - uses: actions/cache@v4
         with:
