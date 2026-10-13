@@ -199,7 +199,12 @@ jobs:
         working-directory: electron
 
       - name: Release
-        run: yarn release
+        run: |
+          if [ -z "${CSC_LINK:-}" ]; then
+            unset CSC_LINK
+            unset CSC_KEY_PASSWORD
+          fi
+          yarn release
         working-directory: electron
 
       - name: Merge latest-mac.yml
@@ -263,7 +268,12 @@ jobs:
         working-directory: electron
 
       - name: Release
-        run: yarn release
+        run: |
+          if [ -z "${CSC_LINK:-}" ]; then
+            unset CSC_LINK
+            unset CSC_KEY_PASSWORD
+          fi
+          yarn release
         working-directory: electron
 
       - name: Merge latest-mac.yml
