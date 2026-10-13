@@ -288,11 +288,6 @@ jobs:
       - build-quick-capture
       - build-frontend-windows
     runs-on: windows-2022
-    env:
-      # Optional Windows code signing (base64 PFX or file URL)
-      WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-      CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-      CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
     steps:
       - name: Check out Git repository
@@ -325,12 +320,17 @@ jobs:
         run: yarn install
         working-directory: electron
 
-      - name: Release
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:WIN_CSC_LINK)) {
-            Remove-Item Env:WIN_CSC_LINK -ErrorAction SilentlyContinue
-            Remove-Item Env:CSC_LINK -ErrorAction SilentlyContinue
-            Remove-Item Env:CSC_KEY_PASSWORD -ErrorAction SilentlyContinue
-          }
-          yarn release
+      - name: Release (signed)
+        if: ${{ secrets.WIN_CSC_LINK != '' }}
+        env:
+          # Optional Windows code signing (base64 PFX or file URL)
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: yarn release
+        working-directory: electron
+
+      - name: Release (unsigned)
+        if: ${{ secrets.WIN_CSC_LINK == '' }}
+        run: yarn release
         working-directory: electron
