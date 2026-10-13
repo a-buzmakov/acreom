@@ -176,7 +176,6 @@ jobs:
         run: |
           mkdir -p ~/private_keys/
           echo '${{ env.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ env.API_KEY_ID }}.p8
-
       - uses: actions/cache@v4
         with:
           path: './electron/node_modules'
@@ -220,6 +219,7 @@ jobs:
       - build-frontend-mac
     runs-on: macos-15-intel
     env:
+      # Signing / notarization (optional — unsigned build if unset)
       CSC_LINK: ${{ secrets.MAC_CERTIFICATES }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATES_PASSWORD }}
       CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.MAC_CERTIFICATES && 'true' || 'false' }}
@@ -245,7 +245,6 @@ jobs:
         run: |
           mkdir -p ~/private_keys/
           echo '${{ env.NOTARIZATION_API_KEY }}' > ~/private_keys/AuthKey_${{ env.API_KEY_ID }}.p8
-
       - uses: actions/cache@v4
         with:
           path: './electron/node_modules'
@@ -288,6 +287,12 @@ jobs:
       - build-quick-capture
       - build-frontend-windows
     runs-on: windows-2022
+    env:
+      # Optional Windows code signing (base64 PFX or https URL).
+      # Leave unset for an unsigned build.
+      WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
     steps:
       - name: Check out Git repository
@@ -320,17 +325,16 @@ jobs:
         run: yarn install
         working-directory: electron
 
-      - name: Release (signed)
-        if: ${{ secrets.WIN_CSC_LINK != '' }}
-        env:
-          # Optional Windows code signing (base64 PFX or file URL)
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-        run: yarn release
+      # FIX: if WIN_CSC_LINK is empty (secret not configured), remove the
+      # signing vars entirely so electron-builder doesn't try to resolve ""
+      # as a certificate path. Unset vars are a pass-through when signing
+      # is enabled. shell: bash is required — the default on Windows is pwsh,
+      # which has no `unset`.
+      - name: Release
         working-directory: electron
-
-      - name: Release (unsigned)
-        if: ${{ secrets.WIN_CSC_LINK == '' }}
-        run: yarn release
-        working-directory: electron
+        shell: bash
+        run: |
+          if [ -z "${WIN_CSC_LINK:-}" ]; then
+            unset WIN_CSC_LINK CSC_LINK CSC_KEY_PASSWORD
+          fi
+          yarn release
